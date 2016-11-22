@@ -122,6 +122,7 @@ int main()
 			world.getCell(i, j).reward_ = -0.1;
 		}
 
+	world.getCell(0, 0).reward_ = 0.0; 
 	world.getCell(2, 1).reward_ = 1.0;
 	world.getCell(2, 0).reward_ = -1.0;
 
@@ -131,15 +132,105 @@ int main()
 
 	std::cout << "----------------------------------------" << std::endl;
 
-	
-	
+
+	int i = my_agent.i_, j = my_agent.j_;
 	for (int t = 0; t < 2; t++) // t = 1000000
-	{	
-		std::cout << "Loop t= " << t << std::endl;
-		int i = my_agent.i_, j = my_agent.j_;
+	{
 		int i_old = i, j_old = j;
-		const int action = rand() % 4;	 // random policy	
-		switch (action)
+		// Update policy
+
+		int position;
+		switch (i)
+		{
+			case 0:
+			{
+				switch (j)
+				{
+				case 0: // up + right
+				{
+					const int ind = rand() % 2;
+					int action[2] = { 0, 3 };
+					position = action[ind];
+					break;
+				}
+				case (world_res_j - 1): // down + right
+				{
+					int ind = rand() % 2;
+					int action[2] = { 1, 3 };
+					position = action[ind];
+					break;
+				}
+				default: // no left
+				{
+					int ind = rand() % 3;
+					int action[3] = { 0, 1, 3 };
+					position = action[ind];
+					break;
+				}
+				}
+				break;
+			}
+				 
+			case (world_res_i - 1):
+			{
+				switch (j)
+				{
+				case 0: // left + up	
+				{
+					int ind = rand() % 2;
+					int action[2] = { 0, 2 };
+					position = action[ind];
+					break;
+				}
+				case world_res_j - 1: // left + down
+				{
+					int ind = rand() % 2;
+					int action[2] = { 1, 2 };
+					position = action[ind];
+					break;
+				}
+				default: // no right
+				{
+					int ind = rand() % 3;
+					int action[3] = { 0, 1, 2 };
+					position = action[ind];
+					break;
+				}
+				}
+				break;
+			}
+				
+		
+			default:
+			{
+				switch (j)
+				{
+				case 0: // no down
+				{
+					int ind = rand() % 3;
+					int action[3] = { 0, 2, 3 };
+					position = action[ind];
+					break;
+				}
+				case (world_res_j - 1): // no up
+				{
+					int ind = rand() % 3;
+					int action[3] = { 1, 2, 3 };
+					position = action[ind];
+					break;
+				}
+				default:
+				{
+					position = rand() % 4;
+					break;
+				}
+				}
+				break;
+			}				
+		}
+
+
+		switch (position)
 		{
 		case 0:
 			j++; // up
@@ -154,63 +245,58 @@ int main()
 			i++; // right
 			break;
 		}
-		
 
-		
-		std::cout << "Action: " <<action << std::endl;
-		std::cout << "Before : i= " << i_old << " j= " << j_old << std::endl;
-		std::cout << "After : i= " << i << " j= " << j << std::endl;
 
 
 		if (world.isInside(i, j) == true) // move robot if available
 		{
+
 			// move agent
 			// update reward
 			// update q values of old cell
 			// reset if agent is in final cells
+
 			if (i == 2)
 			{
 				i = my_agent.i_, j = my_agent.j_;
 				i_old = i;
 				j_old = j;
+				world.getCell(i, j).reward_ = 0.0; 
 			}
-
-			if (i == i_old && j > j_old) // move up
+			else
 			{
-				world.getCell(i, j).reward_ = world.getCell(i_old,j_old).reward_ + (-0.1);
-				world.getCell(i, j).q_[1] = world.getCell(i_old, j_old).q_[0] + world.getCell(i_old, j_old).getMaxQ(); 
+				if (i == i_old && j > j_old) // move up
+				{
+					world.getCell(i, j).reward_ = world.getCell(i_old, j_old).reward_ + (-0.1);
+					world.getCell(i, j).q_[1] = world.getCell(i_old, j_old).q_[0] + world.getCell(i_old, j_old).getMaxQ();
+				}
+				else if (i > i_old && j == j_old) // move right
+				{
+					world.getCell(i, j).reward_ = world.getCell(i_old, j_old).reward_ + (-0.1);
+					world.getCell(i, j).q_[2] = world.getCell(i_old, j_old).q_[3] + world.getCell(i_old, j_old).getMaxQ();
+				}
+				else if (i < i_old && j == j_old) // move left
+				{
+					world.getCell(i, j).reward_ = world.getCell(i_old, j_old).reward_ + (-0.1);
+					world.getCell(i, j).q_[3] = world.getCell(i_old, j_old).q_[2] + world.getCell(i_old, j_old).getMaxQ();
+				}
+				else // move down (
+				{
+					world.getCell(i, j).reward_ = world.getCell(i_old, j_old).reward_ + (-0.1);
+					world.getCell(i, j).q_[0] = world.getCell(i_old, j_old).q_[1] + world.getCell(i_old, j_old).getMaxQ();
+				}
 			}
-			else if (i > i_old && j == j_old) // move right
-			{
-				world.getCell(i, j).reward_ = world.getCell(i_old, j_old).reward_ + (-0.1);
-				world.getCell(i, j).q_[2] = world.getCell(i_old, j_old).q_[3] + world.getCell(i_old, j_old).getMaxQ();
-			}
-			else if (i < i_old && j == j_old) // move left
-			{
-				world.getCell(i, j).reward_ = world.getCell(i_old, j_old).reward_ + (-0.1);
-				world.getCell(i, j).q_[3] = world.getCell(i_old, j_old).q_[2] + world.getCell(i_old, j_old).getMaxQ();
-			}
-			else // move down (
-			{
-				world.getCell(i, j).reward_ = world.getCell(i_old, j_old).reward_ + (-0.1);
-				world.getCell(i, j).q_[0] = world.getCell(i_old, j_old).q_[1] + world.getCell(i_old, j_old).getMaxQ();
-			}
-			
 		}
 		else
 		{
 			// you may give negative reward (penalty) to agent.
-			continue;
+
 		}
 
-		
-		std::cout << "Agent status " << my_agent.i_ << " " << my_agent.j_ << " " << my_agent.reward_ << std::endl;
-		std::cout << "action " << action << std::endl;
-
-		world.print();
+		std::cout << "Action: " << position << std::endl;
+		std::cout << "Current status " << i << " " << j << " " << world.getCell(i,j).reward_ << std::endl;
+		world.print();	
 	}
-
 	//world.print();
-
 	return 0;
 }
